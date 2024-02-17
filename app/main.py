@@ -1,33 +1,37 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.routers import api
+from .config.database import models
+from .config.database.mysql import engine
+from .config.resource import Config
 
 
-# def get_application() -> FastAPI:
+models.Base.metadata.create_all(bind=engine)
 
 
-# app = get_application()
+def get_application() -> FastAPI:
+    app = FastAPI(title=Config.PROJECT_NAME, version=Config.VERSION)
 
-app = FastAPI()
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=Config.ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-origins = [
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "https://stackpython.co",
-]
+    # Include routers
+    app.include_router(api.router, prefix=Config.API_PREFIX)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(api.router)
+    return app
 
 
-@app.get("/")
+# Load environment variables
+Config.load_config()
+app = get_application()
+
+
+@app.get("/ping")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "pong"}

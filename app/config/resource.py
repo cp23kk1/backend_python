@@ -1,20 +1,86 @@
 import os
+from typing import Dict
+from dotenv import load_dotenv
 
-db_config = {
-    "host": "localhost",
-    "username": "root",
-    "password": "63130500059",
-    "db": "vocaverse",
-    "port": "3306"
-}
+dotenv_path = (
+    ".env" if os.getenv("ENVIRONMENT") in ["prod", "sit", "dev"] else ".env.local"
+)
+
+# Load environment variables from .env file
+try:
+    load_dotenv(dotenv_path)
+except Exception as e:
+    raise Exception(f"Error loading {dotenv_path} file: {e}")
+
+
+class Config:
+
+    # initial
+    API_PREFIX: str
+    PROJECT_NAME: str
+    VERSION: str
+    ORIGINS: str
+    # API_PREFIX: str = "/api"
+    # PROJECT_NAME: str = "VOCAVERSE"
+    # VERSION: str = "R2.0.1"
+    # ORIGINS: str = [
+    #     "http://localhost:8080",
+    #     "http://localhost:3000",
+    #     "https://stackpython.co",
+    # ]
+
+    # database config
+    DB_HOST: str
+    DB_USERNAME: str
+    DB_PASSWORD: str
+    DB_NAME: str
+    DB_PORT: str
+
+    # extraction processing
+    origin_files_location_path = os.path.abspath("datasources/origin")
+    computed_files_location_path = os.path.abspath("datasources/computed")
+    computed_file_path = os.path.join(
+        computed_files_location_path,
+        f"computed_file.csv",
+    )
+
+    # response
+    STATUS: Dict[int, str] = {1: "success", 0: "failed"}
+
+    @classmethod
+    def load_config(cls):
+        # Load .env.local if available, otherwise fallback to .env
+        dotenv_path = (
+            ".env"
+            if os.getenv("ENVIRONMENT") in ["prod", "sit", "dev"]
+            else ".env.local"
+        )
+
+        # Load environment variables from .env file
+        try:
+            from dotenv import load_dotenv
+
+            load_dotenv(dotenv_path)
+        except Exception as e:
+            raise Exception(f"Error loading {dotenv_path} file: {e}")
+
+        # Assign environment variables to class attributes
+        cls.API_PREFIX = os.getenv("API_PREFIX")
+        cls.PROJECT_NAME = os.getenv("PROJECT_NAME")
+        cls.VERSION = os.getenv("VERSION")
+        cls.ORIGINS = os.getenv("ORIGINS").split(",")
+        cls.DB_HOST = os.getenv("DB_HOST")
+        cls.DB_USERNAME = os.getenv("DB_USERNAME")
+        cls.DB_PASSWORD = os.getenv("DB_PASSWORD")
+        cls.DB_NAME = os.getenv("DB_NAME")
+        cls.DB_PORT = os.getenv("DB_PORT")
+
+        # Return an instance of the Config class
+        return cls()
+
 
 tables_name = {"vocabulary": "vocabulary"}
 
-datasources_path = "datasources"
-completed_file_path = os.path.join(
-    os.path.abspath(datasources_path),
-    f"computed_file.csv",
-)
 
 pos = {
     "ADJ": "Adjective",

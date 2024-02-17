@@ -1,9 +1,8 @@
 from sqlalchemy.orm import Session
-from app.models.vocabulary_model import VocabularyModel
-from app.config.database.mysql import SessionLocal
+from app.config.database.models import Vocabulary
 
 
 class VocabularyRepo:
 
-    def read(self, id: int, db: Session = SessionLocal()):
-        return db.query(VocabularyModel).filter(VocabularyModel.id == id).first()
+    def get_vocabulary(self, id: int, db: Session):
+        return db.query(Vocabulary).filter(Vocabulary.id == id).first()

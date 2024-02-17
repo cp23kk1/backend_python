@@ -1,21 +1,33 @@
-from fastapi import Depends, File, UploadFile, APIRouter
-from typing import List
+from fastapi import File, UploadFile, APIRouter
+from app.common.response import Response, Error
+from app.config.resource import Config
 from app.services.file_service import FileService
 
 router = APIRouter()
 
-fileService = FileService()
+file_service = FileService()
 
 
 class FileRouter:
 
     @router.get("/list-file/")
     async def list_file():
-        return fileService.list_file()
+        return file_service.list_file()
 
     @router.post("/upload/")
     async def upload(file: UploadFile = File(...)):
-        return await fileService.upload(file)
+        result: str = await file_service.upload(file)
+        if result == "":
+            return Response(
+                status=Config.STATUS[0],
+                error=Error(
+                    status_code=400, message=f"File: {file.filename} unsuccessfully uploaded!"
+                ),
+            )
+        return Response(
+            status=Config.STATUS[1],
+            data={"message": f"File: {file.filename} successfully uploaded!"}
+        )
 
     # @router.post("/")
     # async def up_img(file: UploadFile = File(...)):

@@ -1,14 +1,14 @@
 import os
 from datetime import datetime
-from fastapi import File, Path, UploadFile
-from app.config import constant
+from fastapi import File, UploadFile
+from app.config.resource import Config
 
 
 class FileService:
 
     def list_file(self):
         tree = {}
-        for root, dirs, files in os.walk(constant.datasources_path):
+        for root, dirs, files in os.walk(Config.datasources_path):
             current_level = tree
             folders = root.split(os.sep)[1:]
             for folder in folders:
@@ -28,21 +28,21 @@ class FileService:
                     {"abs_path": abspath, "rel_path": file, "metadata": metadata}
                 )
             current_level["_files"] = file_list
-        # for file in os.listdir(save_path):
-        #
         return tree
 
-    async def upload(self, file: UploadFile = File(...)) -> bool:
+    async def upload(self, file: UploadFile = File(...)) -> str:
         filename, file_extension = os.path.splitext(file.filename)
         file_extension = file_extension.lstrip(".")
         save_path = str(
-            os.path.join(os.path.abspath(constant.datasources_path), file_extension)
+            os.path.join(os.path.abspath(Config.origin_files_location_path), file_extension)
         )
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         file_path = os.path.join(save_path, file.filename)
         if not os.path.exists(file_path):
-            with open(file_path, "wb") as f:
-                f.write(await file.read())
-            return True
-        return False
+            try:
+                with open(file_path, "wb") as f:
+                    f.write(await file.read())
+            except Exception:
+                return ""
+        return save_path

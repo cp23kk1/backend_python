@@ -1,10 +1,12 @@
 import os
 from typing import List
-from fastapi import APIRouter, HTTPException
-from app.models.vocabulary_model import VocabularyModel
+from fastapi import APIRouter, Depends
+from app.config.database.models import Vocabulary
+from app.config.database.mysql import get_database_session
 from app.services.vocabulary_service import VocabularyService
-from common.response_message import Response
-from app.config import constant
+from app.common.response import Response, Error
+from sqlalchemy.orm import Session
+from app.config.resource import Config
 
 router = APIRouter()
 vocabulary_service = VocabularyService()
@@ -13,17 +15,11 @@ vocabulary_service = VocabularyService()
 class VocabularyRouter:
 
     @router.get("/{id}")
-    async def get_vocabulary(id: int):
-        result: VocabularyModel = vocabulary_service.find_vocabulary(id)
-        # # if result.error is not None:
-        # #     raise HTTPException(
-        # #         status_code=result.error.status_code, detail=result.error.error
-        # #     )
-        # if result is None:
-        #     raise HTTPException(
-        #         status_code=404, detail=f"Vocabulary ID: {id} not found"
-        #     )
-        # # else:
-        # #     return Response(status="success", data=result)
-        # return Response(status="success", data=[result])
-        return result
+    async def get_vocabulary(id: int, db: Session = Depends(get_database_session)):
+        result: Vocabulary = vocabulary_service.find_vocabulary_by_id(id, db)
+        if result is None:
+            return Response(
+                status=Config.STATUS[0],
+                error=Error(status_code=404, message=f"Vocabulary ID: {id} not found"),
+            )
+        return Response(status=Config.STATUS[1], data=List(result))
