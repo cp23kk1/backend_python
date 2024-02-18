@@ -1,30 +1,35 @@
-from dataclasses import dataclass
-from typing import Dict, List, Optional
-from http import HTTPStatus
+from collections import defaultdict
 
 
-@dataclass
-class Response:
+class Status:
     status: str
-    error: Dict[str, str]
-    data: List
+    message: dict[str, str]
 
-    def __init__(
-        self, status: str = "", error: Optional[Dict[str, str]] = None, data=None
-    ):
+    def __init__(self, status: str = "", message: dict[str, str] = None):
         self.status = status
-        self.error = error if error is not None else {}
-        self.data = data if data is not None else []
+        self.message = message if message is not None else {}
 
 
-@dataclass
-class Error:
-    status_code: HTTPStatus
-    message: str
+class Response:
+    status: Status
+    data: list | str
+
+    def __init__(self, status: Status, data=None):
+        self.status = status
+        self.data = [] if data is None else data
 
 
-# @dataclass
-# class Result:
-#     def __init__(self, result, error: Optional[Dict[str, str]] = None):
-#         self.result = result
-#         self.error = error
+class Result:
+    value: any
+    err: list
+
+    def __init__(self, value: any, err=None):
+        self.value = value
+        self.err = [] if err is None else err
+
+
+def convert_exception_to_error(exceptions: list) -> dict[str, str]:
+    errors = defaultdict(list)
+    for exception in exceptions:
+        errors[exception.__class__.__name__].append(exception.__str__())
+    return errors

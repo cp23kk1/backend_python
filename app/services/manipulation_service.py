@@ -1,16 +1,14 @@
-from typing import List
-import fitz
 import os
 from app.services.english_service import EnglishService
 import spacy
-from spacy.language import Language
-import re
 import pandas as pd
 import nltk
-import pandas as pd
 import uuid
 from app.config.resource import Config
 from app.config.database.mysql import MySQL
+import json
+from app.common.response import Result
+import shutil
 
 nltk.download("punkt")
 nlp = spacy.load("en_core_web_sm")
@@ -18,10 +16,12 @@ nlp = spacy.load("en_core_web_sm")
 config = Config.load_config()
 english_service = EnglishService()
 
+temp_value = "Temp"
+
 
 class ManipulationService:
 
-    passage_df: pd.DataFrame = pd.DataFrame(columns=["id", "title", "level"])
+    passage_df: pd.DataFrame = pd.DataFrame(columns=["id", "title", "difficulty_id"])
     sentence_df: pd.DataFrame = pd.DataFrame(
         columns=["id", "passage_id", "sequence", "sentence", "meaning", "tense"]
     )
@@ -31,128 +31,16 @@ class ManipulationService:
             "sentence_id",
             "vocabulary",
             "meaning",
-            "difficulty",
+            "difficulty_id",
             "pos",
             "tag",
             "lemma",
             "dep",
         ]
     )
-
-    def manipulate_text_from_pdf(self, pdf_path):
-        doc = fitz.open(pdf_path)
-        text = ""
-
-        for page_num in range(doc.page_count):
-            page = doc[page_num]
-            text += page.get_text()
-
-        doc.close()
-        return text
-
-    @Language.component("custom_sentence_boundary")
-    def custom_sentence_boundary(doc):
-        for token in doc[:-1]:
-            # If a period is followed by a token with an initial uppercase letter, don't split
-            if token.text == "." and doc[token.i + 1].is_title:
-                doc[token.i + 1].is_sent_start = False
-        return doc
-
-    def sentence_tokenize(self, pdf_path):
-        # Download the spaCy model 'en_core_web_sm' if not already installed
-        try:
-            nlp = spacy.load("en_core_web_sm")
-        except OSError:
-            spacy.cli.download("en_core_web_sm")
-            nlp = spacy.load("en_core_web_sm")
-
-        # Add the custom sentence boundary detection component
-        nlp.add_pipe(
-            "custom_sentence_boundary", name="custom_sentence_boundary", before="parser"
-        )
-
-        # Extract text from the PDF using PyMuPDF
-        text = self.extract_text_from_pdf(pdf_path)
-
-        # Exclude lines starting with "chapter"
-        lines = [
-            line.strip()
-            for line in text.split("\n")
-            if not (
-                line.lower().startswith("chapter")
-                or "http" in line.lower()
-                or re.match("^[0-9\\s\\W]+$", line)
-            )
-        ]
-
-        # Process the text using SpaCy
-        doc = nlp(" ".join(lines))
-
-        # num_sentences = len(list(doc.sents))
-        # Extract sentences
-        sentences = [sent.text.strip() for sent in doc.sents]
-        print(sentences)
-        return ""
-
-    # def extract_text(
-    #     self, source_path: str, destination_path: str, extension: str
-    # ) -> Result:
-    #     source_path = os.path.abspath(source_path)
-    #     destination_path = os.path.abspath(destination_path)
-
-    #     if (extension in destination_path) == False:
-    #         return Result(
-    #             [],
-    #             Error(
-    #                 status_code=HTTPStatus.BAD_REQUEST,
-    #                 error={
-    #                     "Error": f"Directory: {source_path} and Extension: {extension} is not match!"
-    #                 },
-    #             ),
-    #         )
-    #     if not os.path.exists(source_path):
-    #         return Result(
-    #             [],
-    #             Error(
-    #                 status_code=HTTPStatus.NOT_FOUND,
-    #                 error={"Error": f"Directory: {destination_path} does not exist!"},
-    #             ),
-    #         )
-    #     if not os.path.exists(destination_path):
-    #         return Result(
-    #             [],
-    #             Error(
-    #                 status_code=HTTPStatus.NOT_FOUND,
-    #                 error={"Error": f"Directory: {destination_path} does not exist!"},
-    #             ),
-    #         )
-
-    #     file_names_arr: List[str] = os.listdir(source_path)
-
-    #     count_check = 0
-    #     for i in range(len(file_names_arr)):
-    #         file_path = os.path.join(source_path, file_names_arr[i])
-    #         file_name = os.path.splitext(file_names_arr[i])[0]
-    #         output_file_path = (
-    #             f"{os.path.join(destination_path, file_name)}.{extension}"
-    #         )
-
-    #         # extracted_text = self.sentence_tokenize(file_path)
-    #         self.sentence_tokenize(file_path)
-    #         count_check += 1
-    #         # with open(output_file_path, 'w', encoding='utf-8') as output_file:
-    #         #     output_file.write(extracted_text)
-
-    #     if not (len(file_names_arr) == count_check):
-    #         return Result(
-    #             [],
-    #             Error(
-    #                 status_code=HTTPStatus.BAD_REQUEST,
-    #                 error={"Error": f"Error occurs during processiong!"},
-    #             ),
-    #         )
-    #     else:
-    #         return Result(result=[])
+    vocabulary_related_df: pd.DataFrame = pd.DataFrame(
+        columns=["vocabulary_id", "sentence_id"]
+    )
 
     def convert_to_passage_df(self, passage_df: pd.DataFrame):
         result_df = pd.DataFrame()
@@ -160,8 +48,11 @@ class ManipulationService:
             result_df = result_df._append(
                 {
                     "id": uuid.uuid4(),
-                    "title": row["title"] if "title" in passage_df.columns else "",
-                    "level": row["label"],
+                    "title": (
+                        row["title"] if "title" in passage_df.columns else temp_value
+                    ),
+                    # "difficulty_id": row["label"],
+                    "difficulty_id": None,
                 },
                 ignore_index=True,
             )
@@ -177,8 +68,8 @@ class ManipulationService:
                     "passage_id": passage_id,
                     "sequence": int(key),
                     "sentence": value["sentence"],
-                    "meaning": "",
-                    "tense": value["tense"],
+                    "meaning": temp_value,
+                    "tense": json.dumps(value["tense"]),
                 },
                 ignore_index=True,
             )
@@ -194,15 +85,31 @@ class ManipulationService:
                         "id": uuid.uuid4(),
                         "sentence_id": sentence_id,
                         "vocabulary": value["vocabulary"],
-                        "meaning": "",
-                        "difficulty": "",
-                        "pos": value["pos"],
-                        "tag": value["tag"],
+                        "meaning": temp_value,
+                        "difficulty_id": None,
+                        "pos": config.POS[value["pos"]],
+                        "tag": config.POS_TAGS[value["tag"]],
                         "lemma": value["lemma"],
-                        "dep": value["dep"],
+                        "dep": config.DEP[value["dep"]],
                     },
                     ignore_index=True,
                 )
+        return result_df
+
+    def convert_to_vocabulary_related_df(self, vocabulary_df: str):
+        result_df = pd.DataFrame()
+        for index, row in vocabulary_df.iterrows():
+            result_df = result_df._append(
+                {
+                    "vocabulary_id": (
+                        row["id"] if "id" in self.vocabulary_df.columns else ""
+                    ),
+                    "sentence_id": (
+                        row["sentence_id"] if "id" in self.vocabulary_df.columns else ""
+                    ),
+                },
+                ignore_index=True,
+            )
         return result_df
 
     def save_file(
@@ -211,8 +118,11 @@ class ManipulationService:
         filename: str,
         extension: str,
     ):
+        save_path = os.path.join(Config.computed_files_path, extension)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
         file_abspath = os.path.join(
-            os.path.abspath(Config.datasources_path),
+            Config.computed_files_path,
             extension,
             f"{filename}.{extension}",
         )
@@ -242,13 +152,22 @@ class ManipulationService:
                     ignore_index=True,
                 )
             break
+        # create vocabulary_related and drop from self.vocabulary_df
+        self.vocabulary_related_df = self.convert_to_vocabulary_related_df(
+            self.vocabulary_df
+        )
+        self.vocabulary_df.drop(columns=["sentence_id"], inplace=True)
         # Save passage
         self.save_file(self.passage_df, "passage", "csv")
         # Save sentence
         self.save_file(self.sentence_df, "sentence", "csv")
         # Save vocabulary
         self.save_file(self.vocabulary_df, "vocabulary", "csv")
+        # Save vocabulary_related
+        self.save_file(self.vocabulary_related_df, "vocabulary_related", "csv")
         completed_file_df = pd.DataFrame()
+        if os.path.exists(config.computed_file_path):
+            completed_file_df = pd.read_csv(config.computed_file_path)
         completed_file_df = completed_file_df._append(
             {
                 "id": uuid.uuid4(),
@@ -260,36 +179,87 @@ class ManipulationService:
             ignore_index=True,
         )
         completed_file_df.to_csv(
-            Config.completed_file_path,
+            config.computed_file_path,
             index=False,
         )
 
-    def separate_by_category(self, file_path: str) -> bool:
-        if not os.path.exists(Config.completed_file_path):
-            pd.DataFrame(
-                columns=["id", "file_path", "passage_id" "sentence_id", "vocabulary_id"]
-            ).to_csv(
-                Config.completed_file_path,
-                index=False,
-            )
-            self.extract_csv(file_path)
-        elif not (
-            file_path in pd.read_csv(Config.completed_file_path)["file_path"].to_list()
-        ):
-            self.extract_csv(file_path)
-        else:
-            print("Have computed this file!")
-            return False
-        return True
+    def separate_by_category(self, file_path: str) -> Result:
+        errors: list[Exception] = []
+        try:
+            if not os.path.exists(config.computed_files_path):
+                os.makedirs(config.computed_files_path)
+            if not os.path.exists(config.computed_file_path):
+                pd.DataFrame(
+                    columns=[
+                        "id",
+                        "file_path",
+                        "passage_id",
+                        "sentence_id",
+                        "vocabulary_id",
+                    ]
+                ).to_csv(
+                    config.computed_file_path,
+                    index=False,
+                )
+                self.extract_csv(file_path)
+            elif not (
+                file_path
+                in pd.read_csv(config.computed_file_path)["file_path"].to_list()
+            ):
+                self.extract_csv(file_path)
+            else:
+                return Result(False, errors)
+        except Exception as e:
+            errors.append(e)
+            return Result(False, errors)
+        return Result(True, errors)
 
-    def import_data(csv_file, table_name):
+    def import_data(self, csv_file, table_name):
         try:
             df = pd.read_csv(csv_file)
-            df.to_sql(table_name, MySQL.engine, if_exists="replace", index=False)
-        except Exception:
-            return False
+            df.to_sql(
+                table_name,
+                MySQL.engine,
+                if_exists="append",
+                index=False,
+                method="multi",
+                chunksize=1000,
+            )
+        except Exception as e:
+            return e
         return True
-    
-    def import_data_from_csv(self, files_path: List[str]):
+
+    def import_data_from_csv(self, files_path: list[str]) -> Result:
+        errors: list[Exception] = []
         for file in files_path:
-            self.import_data(os.path.join(config.computed_files_location_path, "csv", file))
+            try:
+                table_name = os.path.splitext(os.path.basename(file))[0]
+                extension = os.path.splitext(os.path.basename(file))[1].lstrip(".")
+                result = self.import_data(file, table_name)
+                print(type(result))
+                if result is not True:
+                    errors.append(result)
+                else:
+                    if not os.path.exists(config.dumped_files_path):
+                        os.makedirs(os.path.join(config.dumped_files_path, extension))
+                        dumped_file = os.path.join(
+                            config.dumped_files_path, extension, os.path.basename(file)
+                        )
+                        if not os.path.exists(dumped_file):
+                            shutil.move(
+                                file,
+                                dumped_file,
+                            )
+                        else:
+                            computed_df = pd.read_csv(file)
+                            dumped_df = pd.read_csv(dumped_file)
+                            dumped_df = dumped_df._append(
+                                computed_df, ignore_index=True
+                            )
+                            dumped_df.to_csv(
+                                config.computed_file_path,
+                                index=False,
+                            )
+            except Exception as e:
+                errors.append(e)
+        return Result(False, errors) if errors else Result(True, errors)

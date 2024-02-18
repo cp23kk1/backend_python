@@ -1,5 +1,4 @@
 import os
-from typing import Dict
 from dotenv import load_dotenv
 
 dotenv_path = (
@@ -20,14 +19,6 @@ class Config:
     PROJECT_NAME: str
     VERSION: str
     ORIGINS: str
-    # API_PREFIX: str = "/api"
-    # PROJECT_NAME: str = "VOCAVERSE"
-    # VERSION: str = "R2.0.1"
-    # ORIGINS: str = [
-    #     "http://localhost:8080",
-    #     "http://localhost:3000",
-    #     "https://stackpython.co",
-    # ]
 
     # database config
     DB_HOST: str
@@ -37,15 +28,17 @@ class Config:
     DB_PORT: str
 
     # extraction processing
-    origin_files_location_path = os.path.abspath("datasources/origin")
-    computed_files_location_path = os.path.abspath("datasources/computed")
+    datasources_path = "datasources"
+    origin_files_path = os.path.abspath("datasources/origin")
+    computed_files_path = os.path.abspath("datasources/computed")
+    dumped_files_path = os.path.abspath("datasources/dumped")
     computed_file_path = os.path.join(
-        computed_files_location_path,
+        computed_files_path,
         f"computed_file.csv",
     )
 
     # response
-    STATUS: Dict[int, str] = {1: "success", 0: "failed"}
+    STATUS: dict[int, str] = {1: "success", 0: "failed"}
 
     @classmethod
     def load_config(cls):
@@ -78,120 +71,131 @@ class Config:
         # Return an instance of the Config class
         return cls()
 
+    POS = {
+        "ADJ": "Adjective",
+        "ADP": "Adposition",
+        "ADV": "Adverb",
+        "AUX": "Auxiliary verb",
+        "CONJ": "Coordinating conjunction",
+        "CCONJ": "Coordinating conjunction",
+        "DET": "Determiner",
+        "INTJ": "Interjection",
+        "NOUN": "Noun",
+        "NUM": "Numeral",
+        "PART": "Particle",
+        "PRON": "Pronoun",
+        "PROPN": "Proper noun",
+        "PUNCT": "Punctuation",
+        "SCONJ": "Subordinating conjunction",
+        "SYM": "Symbol",
+        "VERB": "Verb",
+        "X": "Other",
+    }
 
-tables_name = {"vocabulary": "vocabulary"}
+    INCLUDED_POS = {
+        "ADJ": "Adjective",
+        "ADP": "Adposition",
+        "ADV": "Adverb",
+        "AUX": "Auxiliary verb",
+        "CONJ": "Coordinating conjunction",
+        "CCONJ": "Coordinating conjunction",
+        "DET": "Determiner",
+        # 'INTJ': 'Interjection',
+        "NOUN": "Noun",
+        # 'NUM': 'Numeral',
+        # 'PART': 'Particle',
+        "PRON": "Pronoun",
+        "PROPN": "Proper noun",
+        "PUNCT": "Punctuation",
+        "SCONJ": "Subordinating conjunction",
+        "SYM": "Symbol",
+        "VERB": "Verb",
+        # 'X': 'Other'
+    }
 
+    POS_TAGS = {
+        "CC": "coordinating conjunction",
+        "CD": "cardinal digit",
+        "DT": "determiner",
+        "EX": "existential there",
+        "FW": "foreign word",
+        "IN": "preposition/subordinating conjunction",
+        "JJ": "adjective",
+        "JJR": "adjective, comparative",
+        "JJS": "adjective, superlative",
+        "LS": "list marker",
+        "MD": "modal",
+        "NN": "noun, singular or mass",
+        "NNS": "noun, plural",
+        "NNP": "proper noun, singular",
+        "NNPS": "proper noun, plural",
+        "PDT": "predeterminer",
+        "POS": "possessive ending",
+        "PRP": "personal pronoun",
+        "PRP$": "possessive pronoun",
+        "RB": "adverb",
+        "RBR": "adverb, comparative",
+        "RBS": "adverb, superlative",
+        "RP": "particle",
+        "SYM": "symbol",
+        "TO": "to",
+        "UH": "interjection",
+        "VB": "verb, base form",
+        "VBD": "verb, past tense",
+        "VBG": "verb, gerund/present participle",
+        "VBN": "verb, past participle",
+        "VBP": "verb, non-3rd person singular present",
+        "VBZ": "verb, 3rd person singular present",
+        "WDT": "wh-determiner",
+        "WP": "wh-pronoun",
+        "WP$": "possessive wh-pronoun",
+        "WRB": "wh-adverb",
+    }
 
-pos = {
-    "ADJ": "Adjective",
-    "ADP": "Adposition",
-    "ADV": "Adverb",
-    "AUX": "Auxiliary verb",
-    "CONJ": "Coordinating conjunction",
-    "DET": "Determiner",
-    "INTJ": "Interjection",
-    "NOUN": "Noun",
-    "NUM": "Numeral",
-    "PART": "Particle",
-    "PRON": "Pronoun",
-    "PROPN": "Proper noun",
-    "PUNCT": "Punctuation",
-    "SCONJ": "Subordinating conjunction",
-    "SYM": "Symbol",
-    "VERB": "Verb",
-    "X": "Other",
-}
-
-included_pos = {
-    "ADJ": "Adjective",
-    "ADP": "Adposition",
-    "ADV": "Adverb",
-    "AUX": "Auxiliary verb",
-    "CONJ": "Coordinating conjunction",
-    "DET": "Determiner",
-    # 'INTJ': 'Interjection',
-    "NOUN": "Noun",
-    # 'NUM': 'Numeral',
-    # 'PART': 'Particle',
-    "PRON": "Pronoun",
-    "PROPN": "Proper noun",
-    "PUNCT": "Punctuation",
-    "SCONJ": "Subordinating conjunction",
-    "SYM": "Symbol",
-    "VERB": "Verb",
-    # 'X': 'Other'
-}
-
-pos_more_tags = {
-    "NN": "Noun, singular or mass",
-    "NNS": "Noun, plural",
-    "NNP": "Proper noun, singular",
-    "NNPS": "Proper noun, plural",
-    "VB": "Verb, base form",
-    "VBD": "Verb, past tense",
-    "VBG": "Verb, gerund or present participle",
-    "VBN": "Verb, past participle",
-    "VBP": "Verb, non-3rd person singular present",
-    "VBZ": "Verb, 3rd person singular present",
-    "JJ": "Adjective",
-    "JJR": "Adjective, comparative",
-    "JJS": "Adjective, superlative",
-    "RB": "Adverb",
-    "RBR": "Adverb, comparative",
-    "RBS": "Adverb, superlative",
-    "PRP": "Personal pronoun",
-    "PRP$": "Possessive pronoun",
-    "DT": "Determiner",
-    "IN": "Preposition or subordinating conjunction",
-    "CC": "Coordinating conjunction",
-    "CD": "Cardinal number",
-    "MD": "Modal",
-}
-
-dependency_relations = {
-    "ROOT": "The root of the sentence, typically the main verb.",
-    "acl": "A clausal modifier of a noun, adjective, or adverb.",
-    "acomp": "Adjectival complement.",
-    "advcl": "Adverbial clause modifier.",
-    "advmod": "Adverbial modifier.",
-    "agent": "Agent of passive verb.",
-    "amod": "Adjectival modifier.",
-    "appos": "Appositional modifier.",
-    "attr": "Attribute.",
-    "aux": "Auxiliary.",
-    "auxpass": "Auxiliary (passive).",
-    "case": "Case marker.",
-    "cc": "Coordinating conjunction.",
-    "ccomp": "Clausal complement.",
-    "compound": "Compound.",
-    "conj": "Conjunct.",
-    "csubj": "Clausal subject.",
-    "csubjpass": "Clausal subject (passive).",
-    "dative": "Dative.",
-    "dep": "Unclassified dependent.",
-    "det": "Determiner.",
-    "dobj": "Direct object.",
-    "expl": "Expletive.",
-    "intj": "Interjection.",
-    "mark": "Marker.",
-    "meta": "Meta modifier.",
-    "neg": "Negation modifier.",
-    "nmod": "Nominal modifier.",
-    "npadvmod": "Noun phrase adverbial modifier.",
-    "nsubj": "Nominal subject.",
-    "nsubjpass": "Nominal subject (passive).",
-    "nummod": "Numeric modifier.",
-    "oprd": "Object predicate.",
-    "parataxis": "Parataxis.",
-    "pcomp": "Prepositional complement.",
-    "pobj": "Object of a preposition.",
-    "poss": "Possession modifier.",
-    "preconj": "Pre-correlative conjunction.",
-    "predet": "Predeterminer.",
-    "prep": "Prepositional modifier.",
-    "prt": "Particle.",
-    "punct": "Punctuation.",
-    "quantmod": "Quantifier modifier.",
-    "relcl": "Relative clause modifier.",
-    "xcomp": "Open clausal complement.",
-}
+    DEP = {
+        "ROOT": "The root of the sentence, typically the main verb.",
+        "acl": "A clausal modifier of a noun, adjective, or adverb.",
+        "acomp": "Adjectival complement.",
+        "advcl": "Adverbial clause modifier.",
+        "advmod": "Adverbial modifier.",
+        "agent": "Agent of passive verb.",
+        "amod": "Adjectival modifier.",
+        "appos": "Appositional modifier.",
+        "attr": "Attribute.",
+        "aux": "Auxiliary.",
+        "auxpass": "Auxiliary (passive).",
+        "case": "Case marker.",
+        "cc": "Coordinating conjunction.",
+        "ccomp": "Clausal complement.",
+        "compound": "Compound.",
+        "conj": "Conjunct.",
+        "csubj": "Clausal subject.",
+        "csubjpass": "Clausal subject (passive).",
+        "dative": "Dative.",
+        "dep": "Unclassified dependent.",
+        "det": "Determiner.",
+        "dobj": "Direct object.",
+        "expl": "Expletive.",
+        "intj": "Interjection.",
+        "mark": "Marker.",
+        "meta": "Meta modifier.",
+        "neg": "Negation modifier.",
+        "nmod": "Nominal modifier.",
+        "npadvmod": "Noun phrase adverbial modifier.",
+        "nsubj": "Nominal subject.",
+        "nsubjpass": "Nominal subject (passive).",
+        "nummod": "Numeric modifier.",
+        "oprd": "Object predicate.",
+        "parataxis": "Parataxis.",
+        "pcomp": "Prepositional complement.",
+        "pobj": "Object of a preposition.",
+        "poss": "Possession modifier.",
+        "preconj": "Pre-correlative conjunction.",
+        "predet": "Predeterminer.",
+        "prep": "Prepositional modifier.",
+        "prt": "Particle.",
+        "punct": "Punctuation.",
+        "quantmod": "Quantifier modifier.",
+        "relcl": "Relative clause modifier.",
+        "xcomp": "Open clausal complement.",
+    }

@@ -1,13 +1,12 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import api
 from .config.database import models
-from .config.database.mysql import engine
+from .config.database.mysql import MySQL
 from .config.resource import Config
 
 
-models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=MySQL.engine)
 
 
 def get_application() -> FastAPI:

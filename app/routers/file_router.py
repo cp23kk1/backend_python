@@ -1,10 +1,11 @@
 from fastapi import File, UploadFile, APIRouter
-from app.common.response import Response, Error
+from app.common.response import Response, Status, Result, convert_exception_to_error
 from app.config.resource import Config
 from app.services.file_service import FileService
 
 router = APIRouter()
 
+config = Config.load_config()
 file_service = FileService()
 
 
@@ -16,18 +17,20 @@ class FileRouter:
 
     @router.post("/upload/")
     async def upload(file: UploadFile = File(...)):
-        result: str = await file_service.upload(file)
-        if result == "":
-            return Response(
-                status=Config.STATUS[0],
-                error=Error(
-                    status_code=400, message=f"File: {file.filename} unsuccessfully uploaded!"
-                ),
-            )
-        return Response(
-            status=Config.STATUS[1],
-            data={"message": f"File: {file.filename} successfully uploaded!"}
-        )
+        result: Result = await file_service.upload(file)
+        return result
+        # if not result.value:
+        #     return Response(
+        #         Status(
+        #             status=config.STATUS[0],
+        #             message=convert_exception_to_error(result.err),
+        #         ),
+        #         data={},
+        #     )
+        # return Response(
+        #     Status(status=config.STATUS[1]),
+        #     data=f"File: {file.filename} successfully uploaded!",
+        # )
 
     # @router.post("/")
     # async def up_img(file: UploadFile = File(...)):

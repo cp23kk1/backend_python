@@ -2,6 +2,9 @@ import os
 from datetime import datetime
 from fastapi import File, UploadFile
 from app.config.resource import Config
+from app.common.response import Result
+
+config = Config.load_config()
 
 
 class FileService:
@@ -30,11 +33,12 @@ class FileService:
             current_level["_files"] = file_list
         return tree
 
-    async def upload(self, file: UploadFile = File(...)) -> str:
+    async def upload(self, file: UploadFile = File(...)) -> Result:
+        errors: list[Exception] = []
         filename, file_extension = os.path.splitext(file.filename)
         file_extension = file_extension.lstrip(".")
         save_path = str(
-            os.path.join(os.path.abspath(Config.origin_files_location_path), file_extension)
+            os.path.join(os.path.abspath(config.origin_files_path), file_extension)
         )
         if not os.path.exists(save_path):
             os.makedirs(save_path)
@@ -43,6 +47,6 @@ class FileService:
             try:
                 with open(file_path, "wb") as f:
                     f.write(await file.read())
-            except Exception:
-                return ""
-        return save_path
+            except Exception as e:
+                errors.append(e)
+        return Result(False, errors) if errors else Result(True, errors)
