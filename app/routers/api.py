@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.routers import file_router, manipulation_router
+from app.routers import english_router, file_router, manipulation_router
 
 router = APIRouter()
 
@@ -9,3 +9,4 @@ router.include_router(
     manipulation_router.router, tags=["manipulation"], prefix="/manipulation"
 )
 router.include_router(file_router.router, tags=["files"], prefix="/files")
+router.include_router(english_router.router, tags=["language"], prefix="/language")

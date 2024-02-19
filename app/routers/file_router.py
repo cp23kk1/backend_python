@@ -1,36 +1,27 @@
-from fastapi import File, UploadFile, APIRouter
-from app.common.response import Response, Status, Result, convert_exception_to_error
+from fastapi import File, UploadFile, APIRouter, HTTPException
+from app.common.response import VocaverseResponse
 from app.config.resource import Config
 from app.services.file_service import FileService
+import http
 
 router = APIRouter()
-
-config = Config.load_config()
+STATIC = Config.load_config()
 file_service = FileService()
 
 
 class FileRouter:
 
-    @router.get("/list-file/")
+    @router.get("/list-file", status_code=http.HTTPStatus.OK)
     async def list_file():
         return file_service.list_file()
 
-    @router.post("/upload/")
+    @router.post("/upload", status_code=201)
     async def upload(file: UploadFile = File(...)):
-        result: Result = await file_service.upload(file)
-        return result
-        # if not result.value:
-        #     return Response(
-        #         Status(
-        #             status=config.STATUS[0],
-        #             message=convert_exception_to_error(result.err),
-        #         ),
-        #         data={},
-        #     )
-        # return Response(
-        #     Status(status=config.STATUS[1]),
-        #     data=f"File: {file.filename} successfully uploaded!",
-        # )
+        try:
+            result = await file_service.upload(file)
+        except Exception as error:
+            raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+        return VocaverseResponse(status={"message": STATIC.SUCCESS}, data=result)
 
     # @router.post("/")
     # async def up_img(file: UploadFile = File(...)):

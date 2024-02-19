@@ -27,6 +27,10 @@ class Config:
     DB_NAME: str
     DB_PORT: str
 
+    # status
+    SUCCESS: str = "SUCCESS"
+    FAILED: str = "FAILED"
+
     # extraction processing
     datasources_path = "datasources"
     origin_files_path = os.path.abspath("datasources/origin")
@@ -36,9 +40,6 @@ class Config:
         computed_files_path,
         f"computed_file.csv",
     )
-
-    # response
-    STATUS: dict[int, str] = {1: "success", 0: "failed"}
 
     @classmethod
     def load_config(cls):

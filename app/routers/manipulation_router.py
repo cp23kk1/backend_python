@@ -1,47 +1,47 @@
-import os
-from typing import List
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.services.manipulation_service import ManipulationService
-from app.common.response import Response, Status, Result, convert_exception_to_error
+from app.common.response import VocaverseResponse
 from app.config.resource import Config
+from app.exceptions import errors
+import http
 
 router = APIRouter()
-config = Config.load_config()
+STATIC = Config.load_config()
 manipulation_service = ManipulationService()
 
 
-class Manipulation:
+class ManipulationRouter:
 
-    @router.post("/extract-passage-from-csv/")
+    @router.post("/extract-passage-from-csv", status_code=http.HTTPStatus.OK)
     async def extract_passage_from_csv(source_path: str):
-        source_path = os.path.join(config.datasources_path, source_path)
+        # source_path = os.path.join(config.datasources_path, source_path)
         result = manipulation_service.separate_by_category(source_path)
-        if not result.value:
-            return Response(
-                Status(
-                    status=config.STATUS[0],
-                    message={
-                        str(result.value): f"Have computed this file!: {source_path}"
-                    },
-                ),
-            )
-        return Response(
-            Status(
-                status=config.STATUS[1],
-                message={
-                    str(result.value): f"Completely process the file: {source_path}"
-                },
-            )
-        )
+        # if not result.value:
+        #     return Response(
+        #         ResponseStatus(
+        #             status=config.STATUS[0],
+        #             message={
+        #                 str(result.value): f"Have computed this file!: {source_path}"
+        #             },
+        #         ),
+        #     )
+        # return Response(
+        #     ResponseStatus(
+        #         status=config.STATUS[1],
+        #         message={
+        #             str(result.value): f"Completely process the file: {source_path}"
+        #         },
+        #     )
+        # )
+        return result
 
-    @router.post("/import-data-from-csv/")
-    async def import_data_from_csv(files_path: List[str]):
-        result: Result = manipulation_service.import_data_from_csv(files_path)
-        if not result.value:
-            return Response(
-                Status(status=config.STATUS[0]), convert_exception_to_error(result.err)
-            )
-        return Response(
-            Status(status=config.STATUS[1]),
-            data={str(result.value): f"Completely dump the file: {files_path}"},
+    @router.post("/import-data-from-csv", status_code=http.HTTPStatus.OK)
+    async def import_data_from_csv(files_path: list[str]):
+        try:
+            result = manipulation_service.import_data_from_csv(files_path)
+        except errors.TemporarilySuspendService as error:
+            raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+        return VocaverseResponse(
+            status={"message": STATIC.SUCCESS},
+            data={"message": f"Completely dump the file: {files_path}"},
         )

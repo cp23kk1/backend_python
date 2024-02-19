@@ -1,5 +1,8 @@
 import spacy
 import nltk
+from googletrans import Translator
+import requests
+from app.exceptions.errors import InputIsNotAlphabet, TemporarilySuspendService
 
 try:
     nlp = spacy.load("en_core_web_sm")
@@ -64,7 +67,7 @@ class EnglishService:
         detected_tenses = [tense for tense, found in tenses.items() if found]
         return detected_tenses
 
-    def is_sentence(self, text):
+    def is_sentence(self, text) -> bool:
         doc = nlp(text)
 
         has_verb = any(token.pos_ == "VERB" for token in doc)
@@ -73,19 +76,36 @@ class EnglishService:
 
         return has_verb and has_subject and has_predicate
 
+    def is_alpha(self, text) -> bool:
+        result = all([token.is_alpha for token in nlp(text)])
+        if not result:
+            raise InputIsNotAlphabet(f"{text} has non-Alphabet!")
+        return result
+
     def vocab_info(self, sentence: str):
         vocab_info = {}
         for token in nlp(sentence):
-            vocab_info[token.text] = {
-                "vocabulary": token.text,
-                "pos": token.pos_,
-                "tag": token.tag_,
-                "lemma": token.lemma_,
-                "dep": token.dep_,    
-                "is_alpha": token.is_alpha,
-                "is_stop": token.is_stop,
-                "morph": token.morph.to_json(),
-            }
+            if token.is_alpha:
+                try:
+                    vocab_info[token.text] = {
+                        "vocabulary": token.text,
+                        "definition": self.get_word_definitions(token.text)[
+                            "defination"
+                        ],
+                        "meaning": self.translate_with_googletrans("th", token.text)[
+                            "translate"
+                        ],
+                        "pos": token.pos_,
+                        "tag": token.tag_,
+                        "lemma": token.lemma_,
+                        "dep": token.dep_,
+                        "is_alpha": token.is_alpha,
+                        "is_stop": token.is_stop,
+                        "morph": token.morph.to_json(),
+                    }
+                except Exception as e:
+                    """"""
+        print(vocab_info)
         return vocab_info
 
     def sentence_info(self, passage: str):
@@ -96,6 +116,48 @@ class EnglishService:
             sentence_info[str(index)] = {
                 "sentence": sentence,
                 "tense": self.check_tenses(sentence) if is_sentence else [],
+                "meaning": self.translate_with_googletrans("th", sentence)["translate"],
                 "is_sentence": is_sentence,
             }
+        print(sentence_info)
         return sentence_info
+
+    def get_dictionary_definitions(self, text):
+        url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{text}"
+
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                return data
+            else:
+                return None
+        except requests.exceptions.RequestException as e:
+            raise TemporarilySuspendService
+
+    def get_word_definitions(self, text):
+        result: dict[str, str] = {}
+        translator = Translator(user_agent="Mozilla/5.0")
+        translation = translator.translate(text, dest="th")
+        is_alpha = [token.is_alpha for token in nlp(text)][0]
+        check_length = len(text.split()) == 1
+        if is_alpha and check_length:
+            if len(translation.extra_data["parsed"]) >= 4:
+                result["origin"] = translation.extra_data["parsed"][3][0]
+                result["defination"] = (
+                    translation.extra_data["parsed"][3][1][0][0][1][0][0]
+                    if translation.extra_data["parsed"][3][1]
+                    else None
+                )
+        else:
+            result = self.translate_with_googletrans("th", text)
+        return result
+
+    def translate_with_googletrans(self, dest: str, text: str):
+        translator = Translator(user_agent="Mozilla/5.0")
+        translation = translator.translate(text, dest=dest)
+        result: dict[str, str] = {"origin": text, "translate": translation.text}
+        return result if result else None
+
+    def translate_en_to_th(self, text: str):
+        return self.translate_with_googletrans("th", text)

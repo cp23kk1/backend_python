@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from fastapi import File, UploadFile
 from app.config.resource import Config
-from app.common.response import Result
 
 config = Config.load_config()
 
@@ -30,11 +29,10 @@ class FileService:
                 file_list.append(
                     {"abs_path": abspath, "rel_path": file, "metadata": metadata}
                 )
-            current_level["_files"] = file_list
+            current_level["files"] = file_list
         return tree
 
-    async def upload(self, file: UploadFile = File(...)) -> Result:
-        errors: list[Exception] = []
+    async def upload(self, file: UploadFile = File(...)):
         filename, file_extension = os.path.splitext(file.filename)
         file_extension = file_extension.lstrip(".")
         save_path = str(
@@ -48,5 +46,5 @@ class FileService:
                 with open(file_path, "wb") as f:
                     f.write(await file.read())
             except Exception as e:
-                errors.append(e)
-        return Result(False, errors) if errors else Result(True, errors)
+                raise Exception(f"A problem occured during saving file: {file}")
+        return True
