@@ -1,8 +1,14 @@
 FROM python:3.12-slim
 
+# Install required system dependencies
+RUN apt-get update \
+    && apt-get install -y pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-COPY . /app
+# Copy the requirements file into the container
+COPY requirements.txt ./app
 
 RUN pip install --upgrade pip
 
@@ -13,6 +19,8 @@ RUN . venv/bin/activate
 
 # Install any needed dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /app
 
 EXPOSE 8000
 
