@@ -8,7 +8,7 @@ RUN apt-get update \
 WORKDIR /app
 
 # Copy the requirements file into the container
-COPY requirements.txt ./app
+COPY requirements.txt .
 
 RUN pip install --upgrade pip
 
@@ -20,7 +20,7 @@ RUN . venv/bin/activate
 # Install any needed dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app
+COPY . .
 
 EXPOSE 8000
 
