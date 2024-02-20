@@ -1,9 +1,9 @@
-FROM python:3.12-slim
+FROM python:3.12.0
 
-# Install required system dependencies
-RUN apt-get update \
-    && apt-get install -y pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+# Install system dependencies including the development packages for MySQL or MariaDB
+RUN apt-get update && \
+    apt-get install -y default-libmysqlclient-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
