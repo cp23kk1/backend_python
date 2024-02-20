@@ -1,17 +1,18 @@
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
 COPY . /app
 
 RUN pip install --upgrade pip
+
 # Install virtualenv, Create a virtual environment and activate it
 RUN pip install virtualenv
 RUN virtualenv venv
 RUN . venv/bin/activate
 
 # Install any needed dependencies specified in requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
 
