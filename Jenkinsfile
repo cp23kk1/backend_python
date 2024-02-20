@@ -24,6 +24,7 @@ pipeline {
                     }
                     }
                 }
+                
         stage('Build PYTHON Images') {
             steps {
                 script {
@@ -73,6 +74,7 @@ pipeline {
                 }
             }
         }
+
         stage('Deploy') {
             steps {
                 script {
