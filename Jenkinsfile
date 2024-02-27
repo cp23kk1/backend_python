@@ -29,15 +29,15 @@ pipeline {
             steps {
                 script {
                     def envContent = """
+                        ORIGINS=${env.ORIGINS}
+                        ENV=${params.deployEnvironment}
+                        VERSION=${PYTHON_IMAGE_NAME}:${GIT_TAG}
+
                         DB_USERNAME=${env.DB_USERNAME}
                         DB_PASSWORD=${env.DB_PASSWORD}
                         DB_NAME=${env.DB_NAME}
                         DB_HOST=${env.DB_HOST}${params.deployEnvironment}
                         DB_PORT=${env.DB_PORT}
-                        ORIGIN=${env.ORIGIN}
-                        ENV=${params.deployEnvironment}
-
-                        VERSION=${PYTHON_IMAGE_NAME}:${GIT_TAG}
                     """
 
                     def envFilePath = '.env'
