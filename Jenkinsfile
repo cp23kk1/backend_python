@@ -78,7 +78,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                sh "docker run -d --name ${CONTAINER_NAME}-${params.deployEnvironment} --network ${params.deployEnvironment}-network ${PYTHON_IMAGE_NAME}:${GIT_TAG}"
+                sh "docker run -d -p 8000:8000 --name ${CONTAINER_NAME}-${params.deployEnvironment} --network ${params.deployEnvironment}-network ${PYTHON_IMAGE_NAME}:${GIT_TAG}"
                 }
             }
         }

@@ -64,7 +64,7 @@ class Config:
         cls.API_PREFIX = os.getenv("API_PREFIX")
         cls.PROJECT_NAME = os.getenv("PROJECT_NAME")
         cls.VERSION = os.getenv("VERSION")
-        cls.ORIGINS = os.getenv("ORIGINS").split(",")
+        cls.ORIGINS = os.getenv("ORIGINS")
         cls.DB_HOST = os.getenv("DB_HOST")
         cls.DB_USERNAME = os.getenv("DB_USERNAME")
         cls.DB_PASSWORD = os.getenv("DB_PASSWORD")
