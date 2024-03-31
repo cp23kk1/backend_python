@@ -8,8 +8,6 @@ dotenv_path = (
 # Load environment variables from .env file
 try:
     load_dotenv(dotenv_path)
-    print(load_dotenv(dotenv_path))
-    print(load_dotenv())
 except Exception as e:
     raise Exception(f"Error loading {dotenv_path} file: {e}")
 
@@ -26,7 +24,8 @@ class Config:
     DB_HOST: str
     DB_USERNAME: str
     DB_PASSWORD: str
-    DB_NAME: str
+    DB_APP_NAME: str
+    DB_CMS_NAME: str
     DB_PORT: str
 
     # status
@@ -68,9 +67,9 @@ class Config:
         cls.DB_HOST = os.getenv("DB_HOST")
         cls.DB_USERNAME = os.getenv("DB_USERNAME")
         cls.DB_PASSWORD = os.getenv("DB_PASSWORD")
-        cls.DB_NAME = os.getenv("DB_NAME")
+        cls.DB_APP_NAME = os.getenv("DB_APP_NAME")
+        cls.DB_CMS_NAME = os.getenv("DB_CMS_NAME")
         cls.DB_PORT = os.getenv("DB_PORT")
-        print(cls.__dict__)
 
         # Return an instance of the Config class
         return cls()

@@ -1,13 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.exceptions.http_error import http_error_handler
-from app.routers import api
-from .config.database import models
-from .config.database.mysql import MySQL
+from app.routes import api
+from .config.database import MySQL
 from .config.resource import Config
+from app.models import app_models, cms_models
 
-
-models.Base.metadata.create_all(bind=MySQL.engine)
+app_models.MySQL.Base.metadata.create_all(bind=MySQL.engine_app)
+# cms_models.Base.metadata.create_all(bind=MySQL.engine_cms)
 
 
 def get_application() -> FastAPI:
@@ -24,8 +24,7 @@ def get_application() -> FastAPI:
     # Add exception handler
     app.add_exception_handler(HTTPException, http_error_handler)
     # Include routers
-    app.include_router(api.router, prefix=Config.API_PREFIX)
-
+    app.include_router(api.router, prefix="/api")
     return app
 
 
