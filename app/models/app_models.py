@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
-from app.config.database import MySQL
+from app.config.database import Base
 
-class Vocabulary(MySQL.Base):
+class Vocabulary(Base):
     __tablename__ = "vocabulary"
 
     id = Column(String(36), primary_key=True)

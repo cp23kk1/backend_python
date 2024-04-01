@@ -2,12 +2,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.exceptions.http_error import http_error_handler
 from app.routes import api
-from .config.database import MySQL
+from .config.database import engine_app, engine_cms
 from .config.resource import Config
 from app.models import app_models, cms_models
 
-app_models.MySQL.Base.metadata.create_all(bind=MySQL.engine_app)
-# cms_models.Base.metadata.create_all(bind=MySQL.engine_cms)
+app_models.Base.metadata.create_all(bind=engine_app)
+cms_models.Base.metadata.create_all(bind=engine_cms)
 
 
 def get_application() -> FastAPI:
@@ -36,3 +36,9 @@ app = get_application()
 @app.get("/ping")
 async def root():
     return {"message": "pong"}
+
+
+@app.get("/terminate-request/")
+async def terminate_request():
+    # Add condition to terminate the request
+    raise HTTPException(status_code=400, detail="Request terminated")
