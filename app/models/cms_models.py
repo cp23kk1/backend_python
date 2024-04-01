@@ -43,10 +43,12 @@ class VocabularyCms(Base):
     pos = Column(String(256))
     tag = Column(String(256))
     lemma = Column(String(256))
-    deb = Column(String(256))
+    dep = Column(String(256))
     morph = Column(String(256))
     process_status = Column(SmallInteger, nullable=False, default=0)
     file_cms_id = Column(Integer, ForeignKey("file_cms.id"))
+    level_cms_id = Column(Integer, ForeignKey("level_cms.id"))
+    transfer_status = Column(SmallInteger, nullable=False, default=0)
 
     file = relationship("FileCms", back_populates="vocabularies")
     sentences = relationship("VocabularyRelatedCms", back_populates="vocabulary")
@@ -94,6 +96,7 @@ class PassageCms(Base):
     process_status = Column(Integer, nullable=False, default=0)
     level_cms_id = Column(Integer, ForeignKey("level_cms.id"))
     file_cms_id = Column(Integer, ForeignKey("file_cms.id"))
+    transfer_status = Column(SmallInteger, nullable=False, default=0)
 
     level = relationship("LevelCms", back_populates="passages")
     file = relationship("FileCms", back_populates="passages")
@@ -112,6 +115,7 @@ class SentenceCms(Base):
     process_status = Column(Integer, nullable=False, default=0)
     file_cms_id = Column(Integer, ForeignKey("file_cms.id"))
     passage_cms_id = Column(String(36), ForeignKey("passage_cms.id"))
+    transfer_status = Column(SmallInteger, nullable=False, default=0)
 
     file = relationship("FileCms", back_populates="sentences")
     passage = relationship("PassageCms", back_populates="sentences")
@@ -127,6 +131,7 @@ class VocabularyRelatedCms(Base):
     vocabulary_cms_id = Column(
         String(36), ForeignKey("vocabulary_cms.id"), primary_key=True
     )
+    transfer_status = Column(SmallInteger, nullable=False, default=0)
 
     sentence = relationship("SentenceCms", back_populates="vocabularies")
     vocabulary = relationship("VocabularyCms", back_populates="sentences")
@@ -137,6 +142,7 @@ class ExtraInformationCms(Base):
 
     id = Column(Integer, primary_key=True)
     vocabulary_id = Column(String(36), ForeignKey("vocabulary_cms.id"), nullable=False)
+    definition = Column(String(512), nullable=False)
     example_usage = Column(String(256))
     meaning = Column(String(512))
 

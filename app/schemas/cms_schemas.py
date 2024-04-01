@@ -49,10 +49,12 @@ class VocabularyCmsBase(BaseModel):
     pos: Optional[str] = None
     tag: Optional[str] = None
     lemma: Optional[str] = None
-    deb: Optional[str] = None
+    dep: Optional[str] = None
     morph: Optional[str] = None
     process_status: int = 0
     file_cms_id: int
+    level_cms_id: int
+    transfer_status: int = 0
 
 
 class VocabularyCmsCreate(VocabularyCmsBase):
@@ -120,6 +122,7 @@ class PassageCmsBase(BaseModel):
     process_status: int
     level_cms_id: int
     file_cms_id: int
+    transfer_status: int = 0
 
 
 class PassageCmsCreate(PassageCmsBase):
@@ -147,6 +150,7 @@ class SentenceCmsBase(BaseModel):
     process_status: int
     file_cms_id: int
     passage_cms_id: Optional[str] = None
+    transfer_status: int = 0
 
 
 class SentenceCmsCreate(SentenceCmsBase):
@@ -167,6 +171,7 @@ class SentenceCms(SentenceCmsBase):
 class VocabularyRelatedCmsBase(BaseModel):
     sentence_cms_id: str
     vocabulary_cms_id: str
+    transfer_status: int = 0
 
 
 class VocabularyRelatedCmsCreate(VocabularyRelatedCmsBase):
@@ -185,7 +190,8 @@ class VocabularyRelatedCms(VocabularyRelatedCmsBase):
 # ExtraInformationCms------------------------------
 class ExtraInformationCmsBase(BaseModel):
     vocabulary_id: str
-    example_usage: str
+    definition: str
+    example: str
     meaning: str
 
 
@@ -198,5 +204,7 @@ class ExtraInformationCmsUpdate(ExtraInformationCmsBase):
 
 
 class ExtraInformationCms(ExtraInformationCmsBase):
+    id: int
+
     class Config:
         from_attributes = True

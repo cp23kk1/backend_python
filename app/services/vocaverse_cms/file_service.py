@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.models import cms_models
 from app.schemas import cms_schemas
 from app.config.resource import Config
-from app.services.vocaverse_cms import level_service, passage_service
+from app.services.vocaverse_cms import level_service, passage_cms_service
 from app.services import language_service
 
 Config.load_config()
@@ -112,7 +112,7 @@ def retrieve_passage_from_csv(db: Session, file_id: int):
     current_file = get_file_by_id(db, file_id)
     source_df = pd.read_csv(current_file.path)
     for index, row in source_df.iterrows():
-        if index < 1:
+        if index < 1000:
             import re
 
             def filter_unsupported_characters(text):
@@ -124,7 +124,7 @@ def retrieve_passage_from_csv(db: Session, file_id: int):
 
             level = level_service.get_level_by_name(db, row["level"].lower())
 
-            save_passage = passage_service.create_passage(
+            save_passage = passage_cms_service.create_passage(
                 db,
                 passage_data={
                     "id": uuid.uuid4(),
@@ -137,10 +137,11 @@ def retrieve_passage_from_csv(db: Session, file_id: int):
                         else 0
                     ),
                     "file_cms_id": file_id,
+                    "transfer_status": 0,
                 },
             )
             passage_id_list.append(save_passage.id)
     current_file.process_status = 1
     create_or_update_file(db, current_file)
-    language_service.passage_processing(db, passage_id_list)
+    # language_service.passage_processing(db, passage_id_list)
     return True

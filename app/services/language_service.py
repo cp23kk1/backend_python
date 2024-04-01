@@ -6,10 +6,10 @@ from nltk.tokenize import sent_tokenize
 from sqlalchemy.orm import Session
 from googletrans import Translator
 from app.services.vocaverse_cms import (
-    passage_service,
-    sentence_service,
-    vocabulary_service,
-    vocabulary_related_service,
+    passage_cms_service,
+    sentence_cms_service,
+    vocabulary_cms_service,
+    vocabulary_related_cms_service,
 )
 from app.exceptions.errors import InputIsNotAlphabet, TemporarilySuspendService
 from app.schemas import cms_schemas
@@ -96,10 +96,10 @@ def is_alpha(text) -> bool:
 def passage_processing(db: Session, passage_id_list: list[str]):
     sentence_id_list = []
     for passage_id in passage_id_list:
-        current_passage = passage_service.get_passage_by_id(db, passage_id)
+        current_passage = passage_cms_service.get_passage_by_id(db, passage_id)
         sentences = sent_tokenize(current_passage.text)
         for index, sentence in enumerate(sentences):
-            save_sentence = sentence_service.create_sentence(
+            save_sentence = sentence_cms_service.create_sentence(
                 db,
                 {
                     "id": uuid.uuid4(),
@@ -111,11 +111,12 @@ def passage_processing(db: Session, passage_id_list: list[str]):
                     "process_status": 0,
                     "file_cms_id": current_passage.file_cms_id,
                     "passage_cms_id": passage_id,
+                    "transfer_status": 0,
                 },
             )
             sentence_id_list.append(save_sentence.id)
         current_passage.process_status = 1
-        passage_service.create_or_update_passage(db, current_passage)
+        passage_cms_service.create_or_update_passage(db, current_passage)
     sentence_processing(db, sentence_id_list)
     return True
 
@@ -123,28 +124,31 @@ def passage_processing(db: Session, passage_id_list: list[str]):
 def sentence_processing(db: Session, sentence_id_list: list[str]):
     vocabulary_id_list = []
     for sentence_id in sentence_id_list:
-        current_sentence = sentence_service.get_sentence_by_id(db, sentence_id)
+        current_sentence = sentence_cms_service.get_sentence_by_id(db, sentence_id)
         current_sentence.meaning = translate_en_to_th(current_sentence.text)
         current_sentence.tense = (", ".join(check_tenses(current_sentence.text)),)
         for token in nlp(current_sentence.text):
-            current_vocab = vocabulary_service.get_vocabulary_by_text(db, token.text)
-            if current_vocab:
-                current_vocabulary_related = (
-                    vocabulary_related_service.get_vocabulary_related_by_ids(
-                        db, sentence_id, current_vocab.id
-                    )
+            if token.is_alpha:
+                current_vocab = vocabulary_cms_service.get_vocabulary_by_text(
+                    db, token.text
                 )
-                if not current_vocabulary_related:
-                    vocabulary_related_service.create_vocabulary_related(
-                        db,
-                        cms_schemas.VocabularyRelatedCmsCreate(
-                            sentence_cms_id=sentence_id,
-                            vocabulary_cms_id=current_vocab.id,
-                        ),
+                if current_vocab:
+                    current_vocabulary_related = (
+                        vocabulary_related_cms_service.get_vocabulary_related_by_ids(
+                            db, sentence_id, current_vocab.id
+                        )
                     )
-            else:
-                if token.is_alpha:
-                    save_vocab = vocabulary_service.create_vocabulary(
+                    if not current_vocabulary_related:
+                        vocabulary_related_cms_service.create_or_update_vocabulary_related(
+                            db,
+                            cms_schemas.VocabularyRelatedCmsCreate(
+                                sentence_cms_id=sentence_id,
+                                vocabulary_cms_id=current_vocab.id,
+                                transfer_status=0,
+                            ),
+                        )
+                else:
+                    save_vocab = vocabulary_cms_service.create_vocabulary(
                         db,
                         {
                             "id": uuid.uuid4(),
@@ -153,78 +157,41 @@ def sentence_processing(db: Session, sentence_id_list: list[str]):
                             "pos": None,
                             "tag": None,
                             "lemma": None,
-                            "deb": None,
+                            "dep": None,
                             "morph": None,
                             "process_status": 0,
                             "file_cms_id": current_sentence.file_cms_id,
+                            "transfer_status": 0,
                         },
                     )
                     vocabulary_id_list.append(save_vocab.id)
-                vocabulary_related_service.create_vocabulary_related(
-                    db,
-                    cms_schemas.VocabularyRelatedCmsCreate(
-                        sentence_cms_id=sentence_id, vocabulary_cms_id=save_vocab.id
-                    ),
-                )
+                    vocabulary_related_cms_service.create_or_update_vocabulary_related(
+                        db,
+                        cms_schemas.VocabularyRelatedCmsCreate(
+                            sentence_cms_id=sentence_id,
+                            vocabulary_cms_id=save_vocab.id,
+                            transfer_status=0,
+                        ),
+                    )
         current_sentence.process_status = 1
-        sentence_service.create_or_update_sentence(db, current_sentence)
+        sentence_cms_service.create_or_update_sentence(db, current_sentence)
     vocabulary_processing(db, vocabulary_id_list)
     return True
 
 
 def vocabulary_processing(db: Session, vocabulary_id_list: list[str]):
     for vocab_id in vocabulary_id_list:
-        current_vocab = vocabulary_service.get_vocabulary_by_id(db, vocab_id)
+        current_vocab = vocabulary_cms_service.get_vocabulary_by_id(db, vocab_id)
         for token in nlp(current_vocab.text):
             current_vocab.meaning = translate_en_to_th(token.text)
             current_vocab.pos = (token.pos_,)
             current_vocab.tag = (token.tag_,)
             current_vocab.lemma = (token.lemma_,)
-            current_vocab.deb = (token.dep_,)
+            current_vocab.dep = (token.dep_,)
             current_vocab.morph = token.morph.to_json()
         current_vocab.process_status = 1
-        vocabulary_service.create_or_update_vocabulary(db, current_vocab)
+        vocabulary_cms_service.create_or_update_vocabulary(db, current_vocab)
     return True
-
-
-def vocab_info(sentence: str):
-    vocab_info = {}
-    for token in nlp(sentence):
-        if token.is_alpha:
-            try:
-                vocab_info[token.text] = {
-                    "vocabulary": token.text,
-                    "definition": get_word_definitions(token.text)["defination"],
-                    "meaning": translate_with_googletrans("th", token.text)[
-                        "translate"
-                    ],
-                    "pos": token.pos_,
-                    "tag": token.tag_,
-                    "lemma": token.lemma_,
-                    "dep": token.dep_,
-                    "is_alpha": token.is_alpha,
-                    "is_stop": token.is_stop,
-                    "morph": token.morph.to_json(),
-                }
-            except Exception as e:
-                """"""
-    print(vocab_info)
-    return vocab_info
-
-
-def sentence_info(passage: str):
-    sentences = nltk.sent_tokenize(passage)
-    sentence_info = {}
-    for index, sentence in enumerate(sentences):
-        is_sentence = is_sentence(sentence)
-        sentence_info[str(index)] = {
-            "sentence": sentence,
-            "tense": check_tenses(sentence) if is_sentence else [],
-            "meaning": translate_with_googletrans("th", sentence)["translate"],
-            "is_sentence": is_sentence,
-        }
-    print(sentence_info)
-    return sentence_info
 
 
 def get_dictionary_definitions(text):
