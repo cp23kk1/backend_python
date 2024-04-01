@@ -66,6 +66,8 @@ pipeline {
                     sh "echo ${params.deployEnvironment}"
                     sh "docker build -t  ${PYTHON_IMAGE_NAME}:${GIT_TAG} \
                     --build-arg DB_HOST=${env.DB_HOST}${params.deployEnvironment} \
+                    --build-arg PROJECT_NAME=VOCAVERSE \
+                    --build-arg VERSION=${GIT_TAG} \
                     --build-arg DB_USERNAME=${env.DB_USERNAME} \
                     --build-arg DB_APP_NAME=${env.DB_NAME} \
                     --build-arg DB_CMS_NAME=vocaverse-cms \
