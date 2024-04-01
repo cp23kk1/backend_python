@@ -194,6 +194,33 @@ def vocabulary_processing(db: Session, vocabulary_id_list: list[str]):
     return True
 
 
+def processing(db: Session, category: str):
+    if category == "passage":
+        passages = (
+            passage_cms_service.get_passages_filter_process_status(
+                db, process_status=0
+            ),
+        )
+        passage_ids = [passage.id for passage in passages]
+        passage_processing(db, passage_ids)
+    elif category == "sentence":
+        sentences = sentence_cms_service.get_sentences_filter_process_status(
+            db, process_status=0
+        )
+        sentence_ids = [sentence.id for sentence in sentences]
+        sentence_processing(db, sentence_ids)
+    else:
+        vocabularies = vocabulary_cms_service.get_vocabularies_filter_process_status(
+            db, process_status=0
+        )
+        vocab_ids = [vocab.id for vocab in vocabularies]
+        vocabulary_processing(
+            db,
+            vocab_ids,
+        )
+    return True
+
+
 def get_dictionary_definitions(text):
     url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{text}"
 

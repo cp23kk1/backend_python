@@ -15,6 +15,14 @@ def get_vocabularies_filter_transfer_status(db: Session, transfer_status: int):
     )
 
 
+def get_vocabularies_filter_process_status(db: Session, process_status: int):
+    return (
+        db.query(cms_models.VocabularyCms)
+        .filter(cms_models.VocabularyCms.process_status == process_status)
+        .all()
+    )
+
+
 def get_vocabulary_by_id(db: Session, vocabulary_id: str):
     return (
         db.query(cms_models.VocabularyCms)

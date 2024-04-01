@@ -15,6 +15,14 @@ def get_sentences_filter_transfer_status(db: Session, transfer_status: int):
     )
 
 
+def get_sentences_filter_process_status(db: Session, process_status: int):
+    return (
+        db.query(cms_models.SentenceCms)
+        .filter(cms_models.SentenceCms.process_status == process_status)
+        .all()
+    )
+
+
 def get_sentence_by_id(db: Session, sentence_id: str):
     return (
         db.query(cms_models.SentenceCms)

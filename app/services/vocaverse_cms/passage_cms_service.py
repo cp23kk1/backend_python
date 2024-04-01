@@ -15,6 +15,14 @@ def get_passages_filter_transfer_status(db: Session, transfer_status: int):
     )
 
 
+def get_passages_filter_process_status(db: Session, process_status: int):
+    return (
+        db.query(cms_models.PassageCms)
+        .filter(cms_models.PassageCms.process_status == process_status)
+        .all()
+    )
+
+
 def get_passage_by_id(db: Session, passage_id: str):
     return (
         db.query(cms_models.PassageCms)

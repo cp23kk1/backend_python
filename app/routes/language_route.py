@@ -30,3 +30,9 @@ class LanguageRouter:
         vocabularies: list[str], db: Session = Depends(get_cms_database_session)
     ):
         return language_service.vocabulary_processing(db, vocabularies)
+
+    @router.post("/processing", status_code=http.HTTPStatus.OK)
+    def processing(
+        category: str, db: Session = Depends(get_cms_database_session)
+    ):
+        return language_service.processing(db, category)
