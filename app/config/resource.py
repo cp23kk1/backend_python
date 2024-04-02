@@ -19,6 +19,7 @@ class Config:
     PROJECT_NAME: str
     VERSION: str
     ORIGINS: str
+    ENV: str
 
     # database config
     DB_HOST: str
@@ -70,6 +71,7 @@ class Config:
         cls.DB_APP_NAME = os.getenv("DB_APP_NAME")
         cls.DB_CMS_NAME = os.getenv("DB_CMS_NAME")
         cls.DB_PORT = os.getenv("DB_PORT")
+        cls.ENV = os.getenv("ENV")
 
         # Return an instance of the Config class
         return cls()

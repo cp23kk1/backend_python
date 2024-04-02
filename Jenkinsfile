@@ -31,6 +31,7 @@ pipeline {
                     def envContent = """
                         ORIGINS=${env.ORIGINS}
                         ENV=${params.deployEnvironment}
+                        PROJECT_NAME=VOCAVERSE
                         VERSION=${PYTHON_IMAGE_NAME}:${GIT_TAG}
 
                         DB_USERNAME=${env.DB_USERNAME}
@@ -65,8 +66,11 @@ pipeline {
                     sh "echo ${params.deployEnvironment}"
                     sh "docker build -t  ${PYTHON_IMAGE_NAME}:${GIT_TAG} \
                     --build-arg DB_HOST=${env.DB_HOST}${params.deployEnvironment} \
+                    --build-arg PROJECT_NAME=VOCAVERSE \
+                    --build-arg VERSION=${GIT_TAG} \
                     --build-arg DB_USERNAME=${env.DB_USERNAME} \
-                    --build-arg DB_NAME=${env.DB_NAME} \
+                    --build-arg DB_APP_NAME=${env.DB_NAME} \
+                    --build-arg DB_CMS_NAME=vocaverse-cms \
                     --build-arg DB_PASSWORD=${env.DB_PASSWORD}\
                     --build-arg DB_PORT=${env.DB_PORT} \
                     --build-arg ENV=${params.deployEnvironment} \
@@ -78,7 +82,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                sh "docker run -d -p 8000:8000 --name ${CONTAINER_NAME}-${params.deployEnvironment} --network ${params.deployEnvironment}-network ${PYTHON_IMAGE_NAME}:${GIT_TAG}"
+                sh "docker run -d --name ${CONTAINER_NAME}-${params.deployEnvironment} --network ${params.deployEnvironment}-network ${PYTHON_IMAGE_NAME}:${GIT_TAG}"
                 }
             }
         }
