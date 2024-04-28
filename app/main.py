@@ -27,7 +27,7 @@ def get_application() -> FastAPI:
     print(Config.ENV)
     app.include_router(
         api.router,
-        prefix="" if (Config.ENV == "prod") else f"/{Config.ENV}" + "/cms/api",
+        prefix="/cms/api" if (Config.ENV == "prod") else f"/{Config.ENV}" + "/cms/api",
     )
     return app
 
