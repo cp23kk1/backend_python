@@ -1,25 +1,24 @@
 from collections import defaultdict
+from app.config.resource import Config
+
+Config.load_config()
 
 
 class VocaverseResponse:
     status: dict[str, str]
-    error: dict[str, str]
     data: dict[str, str]
 
     def __init__(
         self,
-        status={"message": ""},
-        error: dict[str, str] = {},
+        status={"message": Config.SUCCESS},
         data: dict[str, str] = {},
     ):
         self.status = status
-        self.error = error
         self.data = data
 
     def dict(self):
         return {
             "status": self.status,
-            "error": self.error,
             "data": self.data,
         }
 
@@ -30,7 +29,7 @@ class Error:
 
     def __init__(
         self,
-        status={"message": "Failed"},
+        status={"message": Config.FAILED},
         error: dict[str, str] = {},
     ):
         self.status = status

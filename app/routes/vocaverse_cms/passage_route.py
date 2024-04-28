@@ -1,5 +1,8 @@
+import http
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.params import Query
 from sqlalchemy.orm import Session
+from app.common.response import VocaverseResponse
 from app.config.database import get_cms_database_session
 from app.schemas import cms_schemas
 from app.services.vocaverse_cms import passage_cms_service
@@ -9,16 +12,47 @@ router = APIRouter()
 
 class PassageRouter:
 
+    # @router.get("")
+    # def read_passages(db: Session = Depends(get_cms_database_session)):
+    #     try:
+    #         result = passage_cms_service.get_passages(db)
+    #     except Exception as error:
+    #         raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+    #     return VocaverseResponse(data=result)
+
     @router.get("")
-    def read_passages(db: Session = Depends(get_cms_database_session)):
-        return passage_cms_service.get_passages(db)
+    def read_passages(
+        process_status: list[bool] = Query(...),
+        db: Session = Depends(get_cms_database_session),
+    ):
+        try:
+            result = passage_cms_service.get_passages_filter_process_status(
+                db, process_status
+            )
+        except Exception as error:
+            raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+        return VocaverseResponse(data=result)
+
+    @router.get("/with-children")
+    def read_passage_with_children(
+        transfer_status: bool,
+        db: Session = Depends(get_cms_database_session),
+    ):
+        try:
+            result = passage_cms_service.get_passages_with_children(db, transfer_status)
+        except Exception as error:
+            raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+        return VocaverseResponse(data=result)
 
     @router.get("/{passage_id}")
-    def read_passage(passage_id: str, db: Session = Depends(get_cms_database_session)):
-        db_passage = passage_cms_service.get_passage_by_id(db, passage_id)
-        if db_passage is None:
-            raise HTTPException(status_code=404, detail="Passage not found")
-        return db_passage
+    def read_passage_by_id(
+        passage_id: str, db: Session = Depends(get_cms_database_session)
+    ):
+        try:
+            result = passage_cms_service.get_passage_by_id(db, passage_id)
+        except Exception as error:
+            raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+        return VocaverseResponse(data=result)
 
     @router.post("")
     def create_passage(

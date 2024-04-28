@@ -8,8 +8,6 @@ from app.config.database import get_cms_database_session, get_app_database_sessi
 from app.services import transfer_service
 
 router = APIRouter()
-STATIC = Config.load_config()
-
 
 class LanguageRouter:
 

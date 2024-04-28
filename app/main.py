@@ -33,7 +33,7 @@ Config.load_config()
 app = get_application()
 
 
-@app.get("/ping")
+@app.get("/" + Config.ENV + "/cms/api/ping")
 async def root():
     return {"message": "pong"}
 

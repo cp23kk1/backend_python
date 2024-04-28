@@ -1,5 +1,8 @@
+import http
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.params import Query
 from sqlalchemy.orm import Session
+from app.common.response import VocaverseResponse
 from app.config.database import get_cms_database_session
 from app.schemas import cms_schemas
 from app.services.vocaverse_cms import sentence_cms_service
@@ -11,7 +14,24 @@ class SentenceRouter:
 
     @router.get("")
     def read_sentences(db: Session = Depends(get_cms_database_session)):
-        return sentence_cms_service.get_sentences(db)
+        try:
+            result = sentence_cms_service.get_sentences(db)
+        except Exception as error:
+            raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+        return VocaverseResponse(data=result)
+
+    @router.get("/with-children")
+    def read_sentences_with_children(
+        transfer_status: bool,
+        db: Session = Depends(get_cms_database_session),
+    ):
+        try:
+            result = sentence_cms_service.get_sentences_with_children(
+                db, transfer_status
+            )
+        except Exception as error:
+            raise HTTPException(status_code=http.HTTPStatus.BAD_REQUEST, detail=error)
+        return VocaverseResponse(data=result)
 
     @router.get("/{sentence_id}")
     def read_sentence(

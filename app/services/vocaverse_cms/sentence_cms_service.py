@@ -1,10 +1,25 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from sqlalchemy.orm import Session, joinedload
 from app.models import cms_models
 from app.schemas import cms_schemas
 
 
 def get_sentences(db: Session):
     return db.query(cms_models.SentenceCms).all()
+
+
+def get_sentences_with_children(db: Session, transfer_status: bool):
+    return (
+        db.query(cms_models.SentenceCms)
+        .options(
+            joinedload(cms_models.SentenceCms.vocabularies).joinedload(
+                cms_models.VocabularyRelatedCms.vocabulary
+            )
+        )
+        .filter(cms_models.SentenceCms.process_status == 1)
+        .filter(cms_models.SentenceCms.transfer_status == transfer_status)
+        .all()
+    )
 
 
 def get_sentences_filter_transfer_status(db: Session, transfer_status: int):

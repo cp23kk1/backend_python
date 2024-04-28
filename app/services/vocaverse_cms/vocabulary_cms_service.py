@@ -7,7 +7,7 @@ def get_vocabularies(db: Session):
     return db.query(cms_models.VocabularyCms).all()
 
 
-def get_vocabularies_filter_transfer_status(db: Session, transfer_status: int):
+def get_vocabularies_filter_transfer_status(db: Session, transfer_status: bool):
     return (
         db.query(cms_models.VocabularyCms)
         .filter(cms_models.VocabularyCms.transfer_status == transfer_status)
@@ -15,7 +15,7 @@ def get_vocabularies_filter_transfer_status(db: Session, transfer_status: int):
     )
 
 
-def get_vocabularies_filter_process_status(db: Session, process_status: int):
+def get_vocabularies_filter_process_status(db: Session, process_status: bool):
     return (
         db.query(cms_models.VocabularyCms)
         .filter(cms_models.VocabularyCms.process_status == process_status)

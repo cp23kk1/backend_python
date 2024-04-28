@@ -20,3 +20,19 @@ class NotFound(Exception):
     def __init__(self, message="An error occurred"):
         self.message = message
         super().__init__(self.message)
+
+
+class FileExists(Exception):
+    """raise when file exist"""
+
+    def __init__(self, message="An error occurred"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class AlreadyProcessed(Exception):
+    """raise when something have processed"""
+
+    def __init__(self, message="An error occurred"):
+        self.message = message
+        super().__init__(self.message)

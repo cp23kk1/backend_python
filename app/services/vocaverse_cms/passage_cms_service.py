@@ -1,10 +1,25 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from sqlalchemy.orm import Session, joinedload
 from app.models import cms_models
 from app.schemas import cms_schemas
 
 
 def get_passages(db: Session):
     return db.query(cms_models.PassageCms).all()
+
+
+def get_passages_with_children(db: Session, transfer_status: bool):
+    return (
+        db.query(cms_models.PassageCms)
+        .options(
+            joinedload(cms_models.PassageCms.sentences)
+            .joinedload(cms_models.SentenceCms.vocabularies)
+            .joinedload(cms_models.VocabularyRelatedCms.vocabulary)
+        )
+        .filter(cms_models.PassageCms.process_status == 1)
+        .filter(cms_models.PassageCms.transfer_status == transfer_status)
+        .all()
+    )
 
 
 def get_passages_filter_transfer_status(db: Session, transfer_status: int):
@@ -15,10 +30,17 @@ def get_passages_filter_transfer_status(db: Session, transfer_status: int):
     )
 
 
-def get_passages_filter_process_status(db: Session, process_status: int):
+def get_passages_filter_process_status(db: Session, process_status: list[bool]):
     return (
         db.query(cms_models.PassageCms)
-        .filter(cms_models.PassageCms.process_status == process_status)
+        .filter(
+            or_(
+                *(
+                    cms_models.PassageCms.process_status == status
+                    for status in process_status
+                )
+            )
+        )
         .all()
     )
 
