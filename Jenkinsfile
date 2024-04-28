@@ -29,7 +29,7 @@ pipeline {
             steps {
                 script {
                     def envContent = """
-                        ORIGINS=${env.ORIGINS}
+                        ORIGINS=${params.deployEnvironment == 'prod' ? env.PUBLIC_ORIGIN : env.ORIGIN}
                         ENV=${params.deployEnvironment}
                         PROJECT_NAME=VOCAVERSE
                         VERSION=${PYTHON_IMAGE_NAME}:${GIT_TAG}
@@ -41,24 +41,7 @@ pipeline {
                         DB_PORT=${env.DB_PORT}
                     """
 
-                    def envFilePath = '.env'
-
-                    // Check if the .env file exists
-                    if (fileExists(envFilePath)) {
-                        // Read the contents of the existing .env file
-                        def envFileContent = readFile(envFilePath).trim()
-
-                        // Check if the new variable already exists in the .env file
-                        if (envFileContent.contains(envContent)) {
-                            echo "The variable '${envContent}' already exists in the .env file."
-                        } else {
-                            // Append the new variable to the .env file
-                            writeFile(file: envFilePath, text: envFileContent + "\n" + envContent)
-                            echo "Added the variable '${envContent}' to the .env file."
-                        }
-                    } else {
-                        error "The .env file does not exist."
-                    }
+                    writeFile file: '.env', text: envContent
 
                     // Display the content of the created .env file
                     echo "Content of .env:"
