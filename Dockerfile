@@ -22,8 +22,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 8000
-
 ARG DB_USERNAME
 ARG DB_PASSWORD
 ARG DB_HOST
@@ -47,3 +45,5 @@ ENV ENV=${ENV}
 ENV ORIGIN=${ORIGIN}
 
 CMD ["uvicorn", "app.main:app", "--port", "8000"]
+
+EXPOSE 8000
