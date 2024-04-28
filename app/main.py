@@ -24,6 +24,7 @@ def get_application() -> FastAPI:
     # Add exception handler
     app.add_exception_handler(HTTPException, http_error_handler)
     # Include routers
+    print(Config.ENV)
     app.include_router(
         api.router,
         prefix="" if (Config.ENV == "prod") else f"/{Config.ENV}" + "/cms/api",
